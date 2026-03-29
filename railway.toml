@@ -1,5 +1,3 @@
 [build]
-builder = "DOCKERFILE"
-dockerfilePath = "backend/Dockerfile"
-[build.dockerBuild]
-context = "backend"
+# Build config is set per-service in the Railway dashboard.
+# Each service has rootDirectory + dockerfilePath configured via service settings.
