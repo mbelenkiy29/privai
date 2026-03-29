@@ -437,22 +437,9 @@ export default function VoiceProviderSetupModal({
             {providerType === "azure" && (
               <Vertical
                 title="Target URI"
-                subDescription={
-                  <>
-                    Paste the endpoint shown in{" "}
-                    <a
-                      href="https://portal.azure.com/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline"
-                    >
-                      Azure Portal (Keys and Endpoint)
-                    </a>
-                    . PrivateGPT extracts the speech region from this URL. Examples:
-                    https://westus.api.cognitive.microsoft.com/ or
-                    https://westus.tts.speech.microsoft.com/.
-                  </>
-                }
+                subDescription={markdown(
+                  "Paste the endpoint shown in [Azure Portal (Keys and Endpoint)](https://portal.azure.com/). PrivateGPT extracts the speech region from this URL. Examples: https://westus.api.cognitive.microsoft.com/ or https://westus.tts.speech.microsoft.com/."
+                )}
                 nonInteractive
               >
                 <InputTypeIn
