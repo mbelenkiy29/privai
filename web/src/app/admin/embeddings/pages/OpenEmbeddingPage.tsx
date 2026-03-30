@@ -40,30 +40,9 @@ export default function OpenEmbeddingPage({
       />
 
       <Text className="mt-6">
-        Alternatively, (if you know what you&apos;re doing) you can specify a{" "}
-        <a
-          target="_blank"
-          href="https://www.sbert.net/"
-          className="text-link"
-          rel="noreferrer"
-        >
-          SentenceTransformers
-        </a>
-        -compatible model of your choice below. The rough list of supported
-        models can be found{" "}
-        <a
-          target="_blank"
-          href="https://huggingface.co/models?library=sentence-transformers&sort=trending"
-          className="text-link"
-          rel="noreferrer"
-        >
-          here
-        </a>
-        .
-        <br />
-        <b>NOTE:</b> not all models listed will work with PrivateGPT, since some have
-        unique interfaces or special requirements. If in doubt, reach out to the
-        PrivateGPT team.
+        {markdown(
+          "Alternatively, (if you know what you're doing) you can specify a [SentenceTransformers](https://www.sbert.net/)-compatible model of your choice below. The rough list of supported models can be found [here](https://huggingface.co/models?library=sentence-transformers&sort=trending).\n\n**NOTE:** not all models listed will work with PrivateGPT, since some have unique interfaces or special requirements. If in doubt, reach out to the PrivateGPT team."
+        )}
       </Text>
       {!configureModel && (
         // TODO(@raunakab): migrate to opal Button once className/iconClassName is resolved
