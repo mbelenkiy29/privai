@@ -25,11 +25,13 @@ function Main() {
 
   return (
     <div>
-      <Text className="mb-8">
-        This allows you to bring your own analytics tool to PrivateGPT! Copy the Web
-        snippet from your analytics provider into the box below, and we&apos;ll
-        start sending usage events.
-      </Text>
+      <div className="mb-8">
+        <Text>
+          This allows you to bring your own analytics tool to PrivateGPT! Copy the Web
+          snippet from your analytics provider into the box below, and we&apos;ll
+          start sending usage events.
+        </Text>
+      </div>
       <Spacer rem={2} />
 
       <CustomAnalyticsUpdateForm />

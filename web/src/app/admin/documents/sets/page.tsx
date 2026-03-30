@@ -395,11 +395,13 @@ function Main() {
 
   return (
     <div className="mb-8">
-      <Text className="mb-3">
-        {markdown(
-          "**Document Sets** allow you to group logically connected documents into a single bundle. These can then be used as a filter when performing searches to control the scope of information PrivateGPT searches over."
-        )}
-      </Text>
+      <div className="mb-3">
+        <Text>
+          {markdown(
+            "**Document Sets** allow you to group logically connected documents into a single bundle. These can then be used as a filter when performing searches to control the scope of information PrivateGPT searches over."
+          )}
+        </Text>
+      </div>
       <Spacer rem={0.75} />
 
       <div className="mb-3"></div>

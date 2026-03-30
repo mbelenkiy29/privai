@@ -39,11 +39,13 @@ export default function OpenEmbeddingPage({
         currentEmbeddingModel={selectedProvider}
       />
 
-      <Text className="mt-6">
-        {markdown(
+      <div className="mt-6">
+        <Text>
+          {markdown(
           "Alternatively, (if you know what you're doing) you can specify a [SentenceTransformers](https://www.sbert.net/)-compatible model of your choice below. The rough list of supported models can be found [here](https://huggingface.co/models?library=sentence-transformers&sort=trending).\n\n**NOTE:** not all models listed will work with PrivateGPT, since some have unique interfaces or special requirements. If in doubt, reach out to the PrivateGPT team."
         )}
-      </Text>
+        </Text>
+      </div>
       {!configureModel && (
         // TODO(@raunakab): migrate to opal Button once className/iconClassName is resolved
         <Button
