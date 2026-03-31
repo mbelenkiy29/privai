@@ -263,13 +263,7 @@ export default function AdminSidebar({ enableCloudSS }: AdminSidebarProps) {
             </div>
             <div className="flex flex-row gap-1 p-[0.38rem] w-full">
               <Text text03 secondaryAction>
-                <a
-                  className="underline"
-                  href="https://onyx.app"
-                  target="_blank"
-                >
-                  PrivateGPT
-                </a>
+                PrivateGPT
               </Text>
               <Text text03 secondaryBody>
                 |
