@@ -226,6 +226,11 @@ def check_google_app_credentials_exist(
             "client_id": get_google_app_cred(DocumentSource.GOOGLE_DRIVE).web.client_id
         }
     except KvKeyNotFoundError:
+        # Fall back to env-var-based OAuth credentials
+        from onyx.configs.app_configs import OAUTH_GOOGLE_DRIVE_CLIENT_ID
+
+        if OAUTH_GOOGLE_DRIVE_CLIENT_ID:
+            return {"client_id": OAUTH_GOOGLE_DRIVE_CLIENT_ID}
         raise HTTPException(status_code=404, detail="Google App Credentials not found")
 
 

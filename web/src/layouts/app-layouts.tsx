@@ -465,9 +465,7 @@ function Footer() {
 
   const customFooterContent =
     settings?.enterpriseSettings?.custom_lower_disclaimer_content ||
-    `[PrivateGPT ${
-      settings?.webVersion || "dev"
-    }](https://www.onyx.app/) - ${APP_SLOGAN}`;
+    `PrivateGPT ${settings?.webVersion || "dev"} - ${APP_SLOGAN}`;
 
   return (
     <footer

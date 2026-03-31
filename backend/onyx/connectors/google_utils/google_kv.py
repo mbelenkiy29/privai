@@ -47,6 +47,7 @@ from onyx.key_value_store.factory import get_kv_store
 from onyx.key_value_store.interface import unwrap_str
 from onyx.server.documents.models import CredentialBase
 from onyx.server.documents.models import GoogleAppCredentials
+from onyx.server.documents.models import GoogleAppWebCredentials
 from onyx.server.documents.models import GoogleServiceAccountKey
 from onyx.utils.logger import setup_logger
 
@@ -161,13 +162,37 @@ def build_service_account_creds(
 
 
 def get_auth_url(credential_id: int, source: DocumentSource) -> str:
-    if source == DocumentSource.GOOGLE_DRIVE:
-        creds_str = str(get_kv_store().load(KV_GOOGLE_DRIVE_CRED_KEY))
-    elif source == DocumentSource.GMAIL:
-        creds_str = str(get_kv_store().load(KV_GMAIL_CRED_KEY))
-    else:
-        raise ValueError(f"Unsupported source: {source}")
-    credential_json = json.loads(creds_str)
+    credential_json = None
+    try:
+        if source == DocumentSource.GOOGLE_DRIVE:
+            creds_str = str(get_kv_store().load(KV_GOOGLE_DRIVE_CRED_KEY))
+        elif source == DocumentSource.GMAIL:
+            creds_str = str(get_kv_store().load(KV_GMAIL_CRED_KEY))
+        else:
+            raise ValueError(f"Unsupported source: {source}")
+        credential_json = json.loads(creds_str)
+    except Exception:
+        from onyx.configs.app_configs import OAUTH_GOOGLE_DRIVE_CLIENT_ID
+        from onyx.configs.app_configs import OAUTH_GOOGLE_DRIVE_CLIENT_SECRET
+
+        if source == DocumentSource.GOOGLE_DRIVE and OAUTH_GOOGLE_DRIVE_CLIENT_ID:
+            credential_json = {
+                "web": {
+                    "client_id": OAUTH_GOOGLE_DRIVE_CLIENT_ID,
+                    "client_secret": OAUTH_GOOGLE_DRIVE_CLIENT_SECRET,
+                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                    "token_uri": "https://oauth2.googleapis.com/token",
+                    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+                    "redirect_uris": [_build_frontend_google_drive_redirect(source)],
+                    "javascript_origins": [],
+                    "project_id": "privai",
+                }
+            }
+        else:
+            raise
+
+    if credential_json is None:
+        raise ValueError("No Google app credentials found")
     flow = InstalledAppFlow.from_client_config(
         credential_json,
         scopes=GOOGLE_SCOPES[source],
@@ -187,13 +212,32 @@ def get_auth_url(credential_id: int, source: DocumentSource) -> str:
 
 
 def get_google_app_cred(source: DocumentSource) -> GoogleAppCredentials:
-    if source == DocumentSource.GOOGLE_DRIVE:
-        creds_str = str(get_kv_store().load(KV_GOOGLE_DRIVE_CRED_KEY))
-    elif source == DocumentSource.GMAIL:
-        creds_str = str(get_kv_store().load(KV_GMAIL_CRED_KEY))
-    else:
-        raise ValueError(f"Unsupported source: {source}")
-    return GoogleAppCredentials(**json.loads(creds_str))
+    try:
+        if source == DocumentSource.GOOGLE_DRIVE:
+            creds_str = str(get_kv_store().load(KV_GOOGLE_DRIVE_CRED_KEY))
+        elif source == DocumentSource.GMAIL:
+            creds_str = str(get_kv_store().load(KV_GMAIL_CRED_KEY))
+        else:
+            raise ValueError(f"Unsupported source: {source}")
+        return GoogleAppCredentials(**json.loads(creds_str))
+    except Exception:
+        from onyx.configs.app_configs import OAUTH_GOOGLE_DRIVE_CLIENT_ID
+        from onyx.configs.app_configs import OAUTH_GOOGLE_DRIVE_CLIENT_SECRET
+
+        if source == DocumentSource.GOOGLE_DRIVE and OAUTH_GOOGLE_DRIVE_CLIENT_ID:
+            return GoogleAppCredentials(
+                web=GoogleAppWebCredentials(
+                    client_id=OAUTH_GOOGLE_DRIVE_CLIENT_ID,
+                    client_secret=OAUTH_GOOGLE_DRIVE_CLIENT_SECRET,
+                    auth_uri="https://accounts.google.com/o/oauth2/auth",
+                    token_uri="https://oauth2.googleapis.com/token",
+                    auth_provider_x509_cert_url="https://www.googleapis.com/oauth2/v1/certs",
+                    redirect_uris=[_build_frontend_google_drive_redirect(source)],
+                    javascript_origins=[],
+                    project_id="privai",
+                )
+            )
+        raise
 
 
 def upsert_google_app_cred(
