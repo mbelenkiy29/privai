@@ -115,9 +115,9 @@ function buildFolderTree(files: CompanyFile[]): TreeFolder {
 
 function countAllFiles(folder: TreeFolder): number {
   let count = folder.files.length;
-  for (const sub of folder.folders.values()) {
+  Array.from(folder.folders.values()).forEach((sub) => {
     count += countAllFiles(sub);
-  }
+  });
   return count;
 }
 
