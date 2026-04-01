@@ -785,12 +785,33 @@ def list_all_company_files(
     db_session: Session = Depends(get_session),
 ) -> ConnectorFilesResponse:
     """List all files across all FILE source connectors (user-accessible)."""
-    connectors = fetch_connectors(db_session)
+    try:
+        connectors = fetch_connectors(db_session)
+    except Exception as e:
+        logger.warning(f"Error fetching connectors: {e}")
+        return ConnectorFilesResponse(files=[])
+
     file_connectors = [c for c in connectors if c.source == DocumentSource.FILE]
+    if not file_connectors:
+        return ConnectorFilesResponse(files=[])
 
-    file_store = get_default_file_store()
-    all_files: list[ConnectorFileInfo] = []
+    try:
+        file_store = get_default_file_store()
+    except Exception as e:
+        logger.warning(f"Error initializing file store: {e}")
+        # Return basic file info without size/date if file store unavailable
+        all_files: list[ConnectorFileInfo] = []
+        for connector in file_connectors:
+            file_locations = connector.connector_specific_config.get("file_locations", [])
+            file_names = connector.connector_specific_config.get("file_names", [])
+            file_names = _normalize_file_names_for_backwards_compatibility(
+                file_locations, file_names
+            )
+            for file_id, file_name in zip(file_locations, file_names):
+                all_files.append(ConnectorFileInfo(file_id=file_id, file_name=file_name))
+        return ConnectorFilesResponse(files=all_files)
 
+    all_files = []
     for connector in file_connectors:
         file_locations = connector.connector_specific_config.get("file_locations", [])
         file_names = connector.connector_specific_config.get("file_names", [])

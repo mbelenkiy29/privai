@@ -421,12 +421,12 @@ export default function CompanyFilesPage() {
     new Set([""])
   );
 
-  const { data, isLoading, mutate } = useSWR<{ files: CompanyFile[] }>(
+  const { data, isLoading, error, mutate } = useSWR<{ files: CompanyFile[] }>(
     "/api/manage/connector/company-files",
     errorHandlingFetcher
   );
 
-  const files = data?.files ?? [];
+  const files = error ? [] : (data?.files ?? []);
   const tree = buildFolderTree(files);
   const hasFiles = files.length > 0;
 
