@@ -114,8 +114,10 @@ COPY --from=frontend-builder /app/web/public /app/web/public
 COPY --from=frontend-builder /app/web/.next/standalone /app/web
 COPY --from=frontend-builder /app/web/.next/static /app/web/.next/static
 
-# Create the all-in-one supervisord config
+# Create the all-in-one supervisord config and entrypoint
 COPY allinone-supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY allinone-entrypoint.sh /app/allinone-entrypoint.sh
+RUN chmod +x /app/allinone-entrypoint.sh
 
 # Create log files
 RUN mkdir -p /var/log && \
@@ -139,4 +141,4 @@ ENV LD_PRELOAD=libjemalloc.so.2
 
 EXPOSE 3000
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["/app/allinone-entrypoint.sh"]
