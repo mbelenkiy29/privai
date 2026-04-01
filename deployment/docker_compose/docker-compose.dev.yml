@@ -15,6 +15,7 @@ services:
     environment:
       - OAUTH_GOOGLE_DRIVE_CLIENT_ID=125847470224-aagfmbv442vedblme9grr0o8k7apd9j3.apps.googleusercontent.com
       - OAUTH_GOOGLE_DRIVE_CLIENT_SECRET=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
+      - LICENSE_ENFORCEMENT_ENABLED=false
     volumes:
       - ../../backend/onyx:/app/onyx
       - ../../backend/ee:/app/ee

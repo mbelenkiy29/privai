@@ -645,6 +645,73 @@ def upload_files_api(
     return upload_files(files, FileOrigin.OTHER, unzip=unzip)
 
 
+@router.post("/connector/company-files/upload", tags=PUBLIC_API_TAGS)
+def upload_company_files_user(
+    files: list[UploadFile],
+    user: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> StatusResponse:
+    """User-accessible endpoint to upload files to company files.
+    Handles the full flow: upload, create connector, credential, and trigger indexing.
+    """
+    # 1. Upload files to file store
+    upload_response = upload_files(files, FileOrigin.OTHER, unzip=True)
+
+    # 2. Create a file connector
+    connector_data = ConnectorUpdateRequest(
+        name=f"CompanyFiles-{user.email}-{int(datetime.now().timestamp())}",
+        source=DocumentSource.FILE,
+        input_type="load_state",
+        connector_specific_config={
+            "file_locations": upload_response.file_paths,
+            "file_names": upload_response.file_names,
+            "zip_metadata_file_id": upload_response.zip_metadata_file_id,
+        },
+        refresh_freq=None,
+        prune_freq=None,
+        indexing_start=None,
+        access_type=AccessType.PUBLIC,
+        groups=[],
+    )
+    connector = create_connector(db_session, connector_data)
+
+    # 3. Create a dummy credential (file connectors don't need real auth)
+    credential_data = CredentialBase(
+        credential_json={},
+        admin_public=True,
+        source=DocumentSource.FILE,
+        curator_public=True,
+        groups=[],
+        name=f"CompanyFiles-{user.email}",
+    )
+    credential = create_credential(credential_data, user, db_session)
+
+    # 4. Link connector to credential
+    add_credential_to_connector(
+        db_session=db_session,
+        user=user,
+        connector_id=connector.id,
+        credential_id=credential.id,
+        cc_pair_name=connector_data.name,
+        access_type=AccessType.PUBLIC,
+        groups=[],
+    )
+
+    # 5. Trigger indexing
+    trigger_indexing_for_cc_pair(
+        specified_credential_ids=[credential.id],
+        connector_id=connector.id,
+        from_beginning=True,
+        tenant_id=get_current_tenant_id(),
+        db_session=db_session,
+    )
+
+    return StatusResponse(
+        success=True,
+        message=f"Successfully uploaded {len(files)} file(s) for indexing.",
+    )
+
+
 @router.get("/admin/connector/{connector_id}/files", tags=PUBLIC_API_TAGS)
 def list_connector_files(
     connector_id: int,
@@ -710,6 +777,57 @@ def list_connector_files(
             )
 
     return ConnectorFilesResponse(files=files)
+
+
+@router.get("/connector/company-files", tags=PUBLIC_API_TAGS)
+def list_all_company_files(
+    _: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> ConnectorFilesResponse:
+    """List all files across all FILE source connectors (user-accessible)."""
+    connectors = fetch_connectors(db_session)
+    file_connectors = [c for c in connectors if c.source == DocumentSource.FILE]
+
+    file_store = get_default_file_store()
+    all_files: list[ConnectorFileInfo] = []
+
+    for connector in file_connectors:
+        file_locations = connector.connector_specific_config.get("file_locations", [])
+        file_names = connector.connector_specific_config.get("file_names", [])
+        file_names = _normalize_file_names_for_backwards_compatibility(
+            file_locations, file_names
+        )
+
+        for file_id, file_name in zip(file_locations, file_names):
+            try:
+                file_record = file_store.read_file_record(file_id)
+                file_size = None
+                upload_date = None
+                if file_record:
+                    file_size = file_store.get_file_size(file_id)
+                    upload_date = (
+                        file_record.created_at.isoformat()
+                        if file_record.created_at
+                        else None
+                    )
+                all_files.append(
+                    ConnectorFileInfo(
+                        file_id=file_id,
+                        file_name=file_name,
+                        file_size=file_size,
+                        upload_date=upload_date,
+                    )
+                )
+            except Exception as e:
+                logger.warning(f"Error reading file record for {file_id}: {e}")
+                all_files.append(
+                    ConnectorFileInfo(
+                        file_id=file_id,
+                        file_name=file_name,
+                    )
+                )
+
+    return ConnectorFilesResponse(files=all_files)
 
 
 @router.post("/admin/connector/{connector_id}/files/update", tags=PUBLIC_API_TAGS)
