@@ -21,6 +21,7 @@ from pydantic import BaseModel
 from retry import retry
 
 from onyx.configs.app_configs import BLURB_SIZE
+from onyx.configs.app_configs import MANAGED_VESPA
 from onyx.configs.chat_configs import NUM_RETURNED_HITS
 from onyx.configs.chat_configs import TITLE_CONTENT_RATIO
 from onyx.configs.chat_configs import VESPA_SEARCHER_THREADS
@@ -268,6 +269,13 @@ class VespaIndex(DocumentIndex):
         if MULTI_TENANT:
             logger.info(
                 "Skipping Vespa index setup for multitenant (would wipe all indices)"
+            )
+            return None
+
+        if MANAGED_VESPA:
+            logger.info(
+                "Skipping Vespa index deploy for managed Vespa Cloud "
+                "(schema is deployed externally via Vespa CLI/Console)"
             )
             return None
 

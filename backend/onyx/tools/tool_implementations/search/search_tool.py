@@ -50,6 +50,7 @@ from onyx.context.search.models import ChunkIndexRequest
 from onyx.context.search.models import ChunkSearchRequest
 from onyx.context.search.models import IndexFilters
 from onyx.context.search.models import InferenceChunk
+from onyx.context.search.models import PersonaSearchInfo
 from onyx.context.search.models import InferenceSection
 from onyx.context.search.models import SearchDocsResponse
 from onyx.context.search.pipeline import merge_individual_chunks
@@ -446,6 +447,24 @@ class SearchTool(Tool[SearchToolOverrideKwargs]):
         Returns:
             List of InferenceChunk results
         """
+        persona_search_info = None
+        if self.persona:
+            persona_search_info = PersonaSearchInfo(
+                document_set_names=[ds.name for ds in self.persona.document_sets],
+                search_start_date=self.persona.search_start_date,
+                attached_document_ids=[
+                    doc.id for doc in self.persona.documents
+                ]
+                if hasattr(self.persona, "documents") and self.persona.documents
+                else [],
+                hierarchy_node_ids=[
+                    node.id for node in self.persona.hierarchy_nodes
+                ]
+                if hasattr(self.persona, "hierarchy_nodes")
+                and self.persona.hierarchy_nodes
+                else [],
+            )
+
         return search_pipeline(
             chunk_search_request=ChunkSearchRequest(
                 query=query,
@@ -463,7 +482,7 @@ class SearchTool(Tool[SearchToolOverrideKwargs]):
             persona_id_filter=self.persona_id_filter,
             document_index=self.document_index,
             user=self.user,
-            persona=self.persona,
+            persona_search_info=persona_search_info,
             acl_filters=acl_filters,
             embedding_model=embedding_model,
             prefetched_federated_retrieval_infos=federated_retrieval_infos,

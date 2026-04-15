@@ -45,6 +45,7 @@ from onyx.indexing.models import IndexingSetting
 from onyx.key_value_store.factory import get_kv_store
 from onyx.key_value_store.interface import KvKeyNotFoundError
 from onyx.llm.constants import LlmProviderNames
+from onyx.llm.well_known_providers.llm_provider_options import get_anthropic_model_names
 from onyx.llm.well_known_providers.llm_provider_options import get_openai_model_names
 from onyx.natural_language_processing.search_nlp_models import EmbeddingModel
 from onyx.natural_language_processing.search_nlp_models import warm_up_bi_encoder
@@ -255,18 +256,17 @@ def setup_postgres(db_session: Session) -> None:
     associate_default_cc_pair(db_session)
 
     if GEN_AI_API_KEY and fetch_default_llm_model(db_session) is None:
-        # Only for dev flows
-        logger.notice("Setting up default OpenAI LLM for dev.")
+        logger.notice("Setting up default Claude (Anthropic) LLM.")
 
-        llm_model = GEN_AI_MODEL_VERSION or "gpt-4o-mini"
-        provider_name = "DevEnvPresetOpenAI"
+        llm_model = GEN_AI_MODEL_VERSION or "claude-haiku-4-5-20251001"
+        provider_name = "Claude"
         existing = fetch_existing_llm_provider(
             name=provider_name, db_session=db_session
         )
         model_req = LLMProviderUpsertRequest(
             id=existing.id if existing else None,
             name=provider_name,
-            provider=LlmProviderNames.OPENAI,
+            provider=LlmProviderNames.ANTHROPIC,
             api_key=GEN_AI_API_KEY,
             api_base=None,
             api_version=None,
@@ -275,7 +275,7 @@ def setup_postgres(db_session: Session) -> None:
             groups=[],
             model_configurations=[
                 ModelConfigurationUpsertRequest(name=name, is_visible=True)
-                for name in get_openai_model_names()
+                for name in get_anthropic_model_names()
             ],
             api_key_changed=True,
         )
